@@ -12,6 +12,10 @@ module.exports = {
       transaction_date: {
         type: Sequelize.DATE
       },
+      invoice_code: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       id_user: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -19,6 +23,9 @@ module.exports = {
           model: "user",
           key: "id_user"
         }
+      },
+      total_bayar: {
+        type: Sequelize.DOUBLE,
       },
       id_meja: {
         type: Sequelize.INTEGER,

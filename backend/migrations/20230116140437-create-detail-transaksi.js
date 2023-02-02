@@ -25,14 +25,11 @@ module.exports = {
           key: "id_menu"
         }
       },
-      price: {
-        type: Sequelize.INTEGER
+      subtotal: {
+        type: Sequelize.DOUBLE
       },
       qty: {
         type: Sequelize.INTEGER
-      },
-      notes: {
-        type: Sequelize.TEXT
       },
       createdAt: {
         allowNull: false,

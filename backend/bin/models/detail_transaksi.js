@@ -34,9 +34,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    price: DataTypes.DOUBLE,
+    subtotal: DataTypes.DOUBLE,
     qty: DataTypes.INTEGER,
-    notes: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'detail_transaksi',

@@ -20,6 +20,7 @@ class Transaction {
 
       let current = new Date();
       let today = moment(current).format('YYYY-MM-DD');
+      let ran = Math.floor(Math.random() * (99999999999 -  10000000000)) + 10000000000
 
       const dataTransaksi = {
         id_meja: req.body.id_meja,
@@ -27,7 +28,10 @@ class Transaction {
         customer_name: req.body.customer_name,
         status: 'unpaid',
         transaction_date: today,
+        invoice_code: ran
       };
+
+      console.log("Random " + ran)
 
       const listMenu = req.body.list_menu;
 
@@ -49,8 +53,7 @@ class Transaction {
           id_transaksi: insertTransaksi.id_transaksi,
           id_menu: listMenu[i]['id_menu'],
           qty: listMenu[i]['qty'],
-          price: listMenu[i]['qty'] * getMenu.price,
-          notes: listMenu[i]['notes'],
+          subtotal: listMenu[i]['qty'] * getMenu.price,
         };
 
         let insertDetail = await detail.create(detailItem);
@@ -89,6 +92,7 @@ class Transaction {
 
       const data = {
         status: 'paid',
+        total_bayar: req.body.total_bayar,
       };
 
       let result = await transaction.update(data, { where: param });
@@ -130,7 +134,7 @@ class Transaction {
             user === '' || user === 'all' ? null : { '$user.name_user$': user },
           ],
           [Op.or]: [
-            { customer_name : { [Op.substring]: keyword } },
+            { customer_name: { [Op.substring]: keyword } },
             { '$meja.table_number$': { [Op.substring]: keyword } },
             // { status: { [Op.substring]: keyword } },
           ],
@@ -145,7 +149,7 @@ class Transaction {
           },
         ],
       });
-      
+
       return res.status(200).json({
         message: 'success get all data table',
         data: result,
@@ -156,6 +160,92 @@ class Transaction {
         message: 'Internal error',
         err: error,
       });
+    }
+  }
+
+  async updateOrder(req, res) {
+    let granted = await access.cashier(req);
+    if (!granted.status) {
+      return res.status(403).json(granted.message);
+    }
+    try {
+      const param = { id_transaksi: req.params.id_transaction };
+
+      const listOrder = req.body.list_order;
+
+      let detailTransaksi = await detail.findAll({
+        where: param,
+        include: ['menu'],
+      });
+
+      let dataRecent = [];
+      let payloadUpdate = [];
+      let addDetail = [];
+
+      // for (let i = 0; i < detailTransaksi.length; i++) {
+      //   for (let j = 0; j < listOrder.length; j++) {
+      //     if (detailTransaksi[i].dataValues.id_menu === listOrder[j].id_menu) {
+      //       dataRecent[i] = detailTransaksi[i].dataValues;
+      //       payloadUpdate[i] = listOrder[j];
+      //     } else {
+      //       addDetail[i] = listOrder[j];
+      //     }
+      //   }
+      // }
+
+      for (let i = 0; i < listOrder.length; i++) {
+        const find = detailTransaksi.find((x) => x.dataValues.id_menu === listOrder[i].id_menu);
+        if (find) {
+          dataRecent.push(find.dataValues);
+          payloadUpdate.push(listOrder[i]);
+        } else {
+          addDetail.push(listOrder[i]);
+        }
+      }
+
+      console.log('=========== RECENT');
+      console.log(dataRecent);
+
+      console.log('=========== PAYLOAD UPDATE');
+      console.log(payloadUpdate);
+
+      console.log('=========== ADD DETAIL');
+      console.log(addDetail);
+
+      // LOOPING UPDATE QTY
+      for (let i = 0; i < dataRecent.length; i++) {
+        console.log(dataRecent[i]);
+        let getMenu = await menu.findOne({ where: { id_menu: payloadUpdate[i].id_menu } });
+        let payloadQty = {
+          qty: payloadUpdate[i].qty,
+          // price: dataRecent[i].price + payloadUpdate[i].qty * getMenu.price,
+          subtotal: payloadUpdate[i].qty * getMenu.price,
+        };
+
+        await detail.update(payloadQty, {
+          where: { id_detail_transaksi: dataRecent[i].id_detail_transaksi },
+        });
+      }
+
+      // INSERT NEW DETAIL
+      for (let i = 0; i < addDetail.length; i++) {
+        let getMenu = await menu.findOne({ where: { id_menu: addDetail[i].id_menu } });
+
+        let detailItem = {
+          id_transaksi: req.params.id_transaction,
+          id_menu: addDetail[i].id_menu,
+          qty: addDetail[i].qty,
+          subtotal: addDetail[i].qty * getMenu.price,
+        };
+
+        await detail.create(detailItem);
+      }
+
+      return res.status(200).json({
+        message: 'success update order',
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 }
