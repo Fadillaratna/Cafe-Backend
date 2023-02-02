@@ -138,6 +138,7 @@ class Transaction {
             { '$meja.table_number$': { [Op.substring]: keyword } },
             // { status: { [Op.substring]: keyword } },
           ],
+          
         },
         include: [
           'user',
