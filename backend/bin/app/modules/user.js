@@ -136,11 +136,6 @@ class User {
   async getAll(req, res) {
     const { role, keyword } = req.query;
     try {
-      let granted = await access.admin(req);
-      if (!granted.status) {
-        return res.status(403).json(granted.message);
-      }
-
       let result = await user.findAll({
         where: {
           [Op.and]: [role === 'all' || role === '' ? null : { role: role }],

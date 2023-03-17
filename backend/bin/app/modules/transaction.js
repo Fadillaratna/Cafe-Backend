@@ -8,7 +8,10 @@ const table = model.meja;
 const access = require('../utils/access');
 
 const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
+// const Op = Sequelize.Op;
+// const fn = Sequelize.fn;
+
+const {Op, fn, col, literal, where} = Sequelize 
 
 class Transaction {
   async store(req, res) {
@@ -31,7 +34,7 @@ class Transaction {
         invoice_code: ran
       };
 
-      console.log("Random " + ran)
+      console.log(dataTransaksi)
 
       const listMenu = req.body.list_menu;
 
@@ -124,7 +127,7 @@ class Transaction {
 
   async findAll(req, res) {
     try {
-      let { date, user, keyword } = req.query;
+      let { date, user, keyword, month } = req.query;
       let transaction_date = new Date(date);
 
       let result = await transaction.findAll({
@@ -132,13 +135,13 @@ class Transaction {
           [Op.and]: [
             date === '' || date === 'all' ? null : { transaction_date: transaction_date },
             user === '' || user === 'all' ? null : { '$user.name_user$': user },
+            month === 'all' ? null :  where(fn('MONTH', col('transaction_date')), month) 
           ],
           [Op.or]: [
             { customer_name: { [Op.substring]: keyword } },
             { '$meja.table_number$': { [Op.substring]: keyword } },
             // { status: { [Op.substring]: keyword } },
           ],
-          
         },
         include: [
           'user',
@@ -249,6 +252,38 @@ class Transaction {
       console.log(error);
     }
   }
+
+  async getFavMenu(req, res){
+    try {
+      let result = await detail    .findAll({
+        attributes: [
+          'id_menu',
+          [fn('SUM', col('detail_transaksi.qty')), 'jumlah']
+        ],
+        include: [
+          {
+            model: model.menu,
+            as: 'menu'
+          }
+        ],
+        group: ['id_menu'],
+        order: [[literal('jumlah'), 'DESC']]
+      }) // mengambil semua data detail_transaksi
+
+      return res.status(200).json({
+        message: 'success get data fav',
+        data: result,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: 'Internal error',
+        err: error,
+      });
+    }
+  }
+
+  
 }
 
 module.exports = Transaction;

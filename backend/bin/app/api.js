@@ -35,9 +35,10 @@ const routes = async (server) => {
   server.get('/api/menu/:type', jwtAuth, menu.getByType);
 
   server.get('/api/transaction/', jwtAuth, transaction.findAll);
-  server.post('/api/transaction', jwtAuth, transaction.store);
+  server.post('/api/transaction/', jwtAuth, transaction.store);
   server.put('/api/transaction/updateStatus/:id_transaction', jwtAuth, transaction.updateStatus);
   server.put('/api/transaction/updateOrder/:id_transaction', jwtAuth, transaction.updateOrder);
+  server.get('/api/transaction/favMenu/', jwtAuth, transaction.getFavMenu);
 };
 
 module.exports = { routes };

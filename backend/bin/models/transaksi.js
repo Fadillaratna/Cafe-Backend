@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     invoice_code: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     transaction_date: DataTypes.DATE,
